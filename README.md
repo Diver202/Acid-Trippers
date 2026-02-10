@@ -105,9 +105,9 @@ python src/main.py
 ## Current Status
 
 - [x] Mock data generator
-- [ ] Field normalizer
-- [ ] Data analyzer
-- [ ] Classifier with heuristics
+- [x] Field normalizer
+- [x] Data analyzer
+- [x] Classifier with heuristics
 - [ ] SQL backend integration
 - [ ] MongoDB backend integration
 - [ ] Metadata persistence
