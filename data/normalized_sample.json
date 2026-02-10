@@ -1,0 +1,113 @@
+[
+  {
+    "username": "user_2",
+    "timestamp": "2026-02-02T03:54:25.372819",
+    "ip_address": "229.44.216.9",
+    "country": "USA",
+    "session_id": "sess_1_9928",
+    "metadata": {
+      "browser": "Edge",
+      "os": "macOS",
+      "device": {
+        "type": "desktop",
+        "screen_size": "1024x1080"
+      }
+    }
+  },
+  {
+    "username": "user_22",
+    "timestamp": "2026-02-06T04:20:25.372819",
+    "ip_address": "92.176.135.207",
+    "email": "user_4@example.com",
+    "session_id": "sess_2_6925"
+  },
+  {
+    "username": "user_3",
+    "timestamp": "2026-02-03T02:03:25.372819",
+    "ip_address": "117.186.83.95",
+    "age": 35,
+    "email": "user_3@example.com",
+    "country": "Canada",
+    "status": "pending",
+    "session_id": "sess_3_4598",
+    "metadata": {
+      "browser": "Safari",
+      "os": "Windows",
+      "device": {
+        "type": "mobile",
+        "screen_size": "1920x768"
+      }
+    }
+  },
+  {
+    "username": "user_37",
+    "timestamp": "2026-01-31T04:27:25.372819",
+    "ip_address": "36.126.134.192",
+    "age": 43,
+    "email": "user_5@example.com",
+    "country": "USA",
+    "session_id": "sess_4_7916"
+  },
+  {
+    "username": "user_39",
+    "timestamp": "2026-01-25T02:33:25.372819",
+    "ip_address": "30.136.174.29",
+    "age": 47,
+    "email": "user_9@example.com",
+    "country": "UK",
+    "session_id": "sess_5_4258"
+  },
+  {
+    "username": "user_39",
+    "timestamp": "2026-01-26T11:01:25.372819",
+    "ip_address": "62.40.43.188",
+    "age": 66,
+    "country": "India",
+    "status": "suspended",
+    "session_id": "sess_6_4295"
+  },
+  {
+    "username": "user_29",
+    "timestamp": "2026-01-27T07:53:25.372819",
+    "ip_address": "142.117.112.2",
+    "email": "user_8@example.com",
+    "country": "France",
+    "status": "pending",
+    "session_id": "sess_7_9834"
+  },
+  {
+    "username": "user_16",
+    "timestamp": "2026-01-15T21:56:25.372819",
+    "age": 45,
+    "email": "user_2@example.com",
+    "country": "UK",
+    "status": "pending",
+    "session_id": "sess_8_4116",
+    "metadata": {
+      "browser": "Edge",
+      "os": "macOS",
+      "device": {
+        "type": "desktop",
+        "screen_size": "1366x768"
+      }
+    }
+  },
+  {
+    "username": "user_36",
+    "timestamp": "2026-02-08T14:34:25.372819",
+    "ip_address": "218.121.85.105",
+    "age": 73,
+    "country": "Japan",
+    "status": "suspended",
+    "session_id": "sess_9_8973"
+  },
+  {
+    "username": "user_4",
+    "timestamp": "2026-01-17T18:05:25.372819",
+    "ip_address": "123.80.29.246",
+    "age": 22,
+    "email": "user_8@example.com",
+    "status": "inactive",
+    "session_id": "sess_10_2343"
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "api": {
+    "base_url": "http://127.0.0.1:8000",
+    "batch_size": 100,
+    "stream_delay": 0.1
+  },
+  "database": {
+    "sql": {
+      "type": "postgresql",
+      "host": "localhost",
+      "port": 5432,
+      "database": "adaptive_db",
+      "user": "postgres",
+      "password": "password"
+    },
+    "mongodb": {
+      "host": "localhost",
+      "port": 27017,
+      "database": "adaptive_db"
+    }
+  },
+  "analysis": {
+    "buffer_size": 500,
+    "min_records_for_analysis": 100
+  },
+  "classification": {
+    "thresholds": {
+      "sql_frequency": 0.80,
+      "sql_type_stability": 0.90,
+      "unique_cardinality": 0.95,
+      "sparse_threshold": 0.30
+    }
+  },
+  "metadata": {
+    "storage_path": "data/metadata_store.json"
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/ingestion.log"
+  }
+}
