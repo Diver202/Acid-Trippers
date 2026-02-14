@@ -78,6 +78,28 @@ pip install -r requirements.txt
 python src/main.py
 ```
 
+### Data Streaming App Setup
+#### Run Locally
+```
+pip install -r requirements.txt
+cd src
+uvicorn data_stream_client:app --reload --port 8000
+```
+Then open:
+```
+http://127.0.0.1:8000
+```
+
+#### Endpoints
+
+Single record  
+`GET /`
+
+Multiple records  
+`GET /record/{count}`
+
+#### Other useful `curl` 
+
 ## Key Features
 
 ### Phase 1: Ingestion & Normalization
