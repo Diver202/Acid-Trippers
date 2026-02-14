@@ -1,184 +1,125 @@
-"""
-Data Stream Client
-Fetches JSON records from the synthetic data streaming API
-"""
+# Originally simulation_code.py available at https://github.com/YogeshKMeena/Course_Resources/tree/main/CS432_Databases/Assignments/T2
 
-import requests
+from fastapi import FastAPI
+from faker import Faker
+from sse_starlette.sse import EventSourceResponse
+from datetime import datetime, timedelta
+import random
+import asyncio
 import json
-import time
-from typing import List, Dict, Any, Optional, Iterator
-import logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+random.seed(42)
+app = FastAPI()
+faker = Faker()
 
+# 1. Unique Field Constraint: Persistent Pool of 1,000 users (The Glue)
+USER_POOL = [faker.user_name() for _ in range(1000)]
 
-class DataStreamClient:
-    """
-    Client for fetching data from the synthetic data streaming API
-    """
-    
-    def __init__(self, base_url: str = "http://127.0.0.1:8000"):
-        """
-        Initialize the client
-        
-        Args:
-            base_url: Base URL of the FastAPI server
-        """
-        self.base_url = base_url.rstrip('/')
-        self._verify_connection()
-    
-    def _verify_connection(self):
-        """Verify that the API is accessible"""
-        try:
-            response = requests.get(f"{self.base_url}/", timeout=5)
-            response.raise_for_status()
-            logger.info(f"✓ Successfully connected to API at {self.base_url}")
-        except requests.exceptions.RequestException as e:
-            logger.warning(f" Could not connect to API at {self.base_url}")
-            logger.warning(f"  Error: {e}")
-            logger.warning(f"  Make sure the FastAPI server is running:")
-            logger.warning(f"    uvicorn app:app --reload --port 8000")
-    
-    def fetch_single_record(self) -> Dict[str, Any]:
-        """
-        Fetch a single record from the API
-        
-        Returns:
-            Single JSON record
-        """
-        try:
-            response = requests.get(f"{self.base_url}/")
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error fetching single record: {e}")
-            raise
-    
-    def fetch_batch(self, count: int = 100) -> List[Dict[str, Any]]:
-        """
-        Fetch multiple records in a batch
-        
-        Args:
-            count: Number of records to fetch
-            
-        Returns:
-            List of JSON records
-        """
-        try:
-            response = requests.get(f"{self.base_url}/record/{count}")
-            response.raise_for_status()
-            data = response.json()
-            
-            # The API might return a list directly or wrapped in a key
-            if isinstance(data, list):
-                return data
-            elif isinstance(data, dict) and 'records' in data:
-                return data['records']
-            else:
-                # Assume it's a single record, wrap it in a list
-                return [data]
-                
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error fetching batch of {count} records: {e}")
-            raise
-    
-    def stream_records(self, total_records: int, batch_size: int = 100, 
-                      delay: float = 0.1) -> Iterator[Dict[str, Any]]:
-        """
-        Stream records in batches with configurable delay
-        
-        Args:
-            total_records: Total number of records to fetch
-            batch_size: Records per batch request
-            delay: Delay between batches in seconds
-            
-        Yields:
-            Individual JSON records
-        """
-        records_fetched = 0
-        
-        while records_fetched < total_records:
-            # Calculate how many to fetch in this batch
-            remaining = total_records - records_fetched
-            current_batch_size = min(batch_size, remaining)
-            
-            try:
-                batch = self.fetch_batch(current_batch_size)
-                
-                for record in batch:
-                    yield record
-                    records_fetched += 1
-                
-                logger.info(f"Fetched {records_fetched}/{total_records} records")
-                
-                # Delay before next batch (if more to fetch)
-                if records_fetched < total_records:
-                    time.sleep(delay)
-                    
-            except Exception as e:
-                logger.error(f"Error in streaming at record {records_fetched}: {e}")
-                break
-    
-    def save_to_file(self, num_records: int, filename: str, 
-                     batch_size: int = 100) -> str:
-        """
-        Fetch records and save to JSON file
-        
-        Args:
-            num_records: Number of records to fetch
-            filename: Output filename
-            batch_size: Records per API call
-            
-        Returns:
-            Path to saved file
-        """
-        records = []
-        
-        for record in self.stream_records(num_records, batch_size):
-            records.append(record)
-        
-        with open(filename, 'w') as f:
-            json.dump(records, f, indent=2)
-        
-        logger.info(f"Saved {len(records)} records to {filename}")
-        return filename
+# Original pool of 50 realistic fields preserved
+FIELD_POOL = {
+    "name": lambda: faker.name(),
+    "age": lambda: random.randint(18, 70),
+    "email": lambda: faker.email(),
+    "phone": lambda: faker.phone_number(),
+    "ip_address": lambda: faker.ipv4(),
+    "device_id": lambda: faker.uuid4(),
+    "device_model": lambda: random.choice(["iPhone 14", "Pixel 8", "Samsung S23", "OnePlus 12"]),
+    "os": lambda: random.choice(["Android", "iOS", "Windows", "Linux", "MacOS"]),
+    "app_version": lambda: f"v{random.randint(1, 5)}.{random.randint(0, 9)}.{random.randint(0, 9)}",
+    "battery": lambda: random.randint(1, 100),
+    "charging": lambda: random.choice([True, False]),
+    "network": lambda: random.choice(["WiFi", "4G", "5G", "Ethernet", "Offline"]),
+    "gps_lat": lambda: float(faker.latitude()),
+    "gps_lon": lambda: float(faker.longitude()),
+    "altitude": lambda: round(random.uniform(1, 3000), 2),
+    "speed": lambda: round(random.uniform(0, 120), 2),
+    "direction": lambda: random.choice(["N", "S", "E", "W"]),
+    "city": lambda: faker.city(),
+    "country": lambda: faker.country(),
+    "postal_code": lambda: faker.postcode(),
+    "timestamp": lambda: datetime.utcnow().isoformat(),
+    "session_id": lambda: faker.uuid4(),
+    "steps": lambda: random.randint(0, 12000),
+    "heart_rate": lambda: random.randint(60, 180),
+    "spo2": lambda: random.randint(90, 100),
+    "sleep_hours": lambda: round(random.uniform(3, 9), 1),
+    "stress_level": lambda: random.choice(["low", "medium", "high"]),
+    "mood": lambda: random.choice(["happy", "sad", "neutral", "angry", "excited"]),
+    "weather": lambda: random.choice(["sunny", "rainy", "cloudy", "stormy", "snow"]),
+    "temperature_c": lambda: round(random.uniform(-10, 45), 1),
+    "humidity": lambda: random.randint(10, 100),
+    "air_quality": lambda: random.choice(["good", "moderate", "bad", "hazardous"]),
+    "action": lambda: random.choice(["login", "logout", "view", "click", "purchase"]),
+    "purchase_value": lambda: round(random.uniform(5, 500), 2),
+    "item": lambda: random.choice(["book", "phone", "shoes", "bag", "laptop", None]),
+    "payment_status": lambda: random.choice(["success", "failed", "pending"]),
+    "subscription": lambda: random.choice(["free", "trial", "basic", "premium"]),
+    "language": lambda: faker.language_name(),
+    "timezone": lambda: faker.timezone(),
+    "cpu_usage": lambda: random.randint(1, 100),
+    "ram_usage": lambda: random.randint(1, 100),
+    "disk_usage": lambda: random.randint(1, 100),
+    "signal_strength": lambda: random.randint(1, 5),
+    "error_code": lambda: random.choice([None, 100, 200, 500, 404, 403]),
+    "retry_count": lambda: random.randint(0, 5),
+    "is_active": lambda: random.choice([True, False]),
+    "is_background": lambda: random.choice([True, False]),
+    "comment": lambda: faker.sentence(),
+    "avatar_url": lambda: faker.image_url(),
+    "last_seen": lambda: (datetime.utcnow() - timedelta(minutes=random.randint(1, 300))).isoformat(),
+    "friends_count": lambda: random.randint(0, 5000)
+}
 
+# --- NEW: BIAS LOGIC (Randomness inside Randomness) ---
+# Each field gets a permanent "Appearance Probability" for this server session.
+# Some will be > 0.8 (Common/SQL candidates), some < 0.2 (Rare/Mongo candidates).
+FIELD_WEIGHTS = {key: random.uniform(0.05, 0.95) for key in FIELD_POOL.keys()}
 
-if __name__ == "__main__":
-    # Test the client
-    client = DataStreamClient()
+def get_nested_metadata():
+    """Generates consistent nested keys but randomly omits keys AND values."""
+    # We define the full potential structure
+    full_meta = {
+        "sensor_data": {
+            "version": "2.1",
+            "calibrated": random.choice([True, False]),
+            "readings": [random.randint(1, 10) for _ in range(3)]
+        },
+        "tags": [faker.word() for _ in range(random.randint(1, 3))],
+        "is_bot": random.choice([True, False]),
+        "internal_id": faker.bothify(text='ID-####-??')
+    }
     
-    print("\n" + "=" * 80)
-    print("Testing Data Stream Client")
-    print("=" * 80)
+    # Heuristic: Randomly drop keys within the nested object (50% chance to drop each key)
+    sparse_meta = {k: v for k, v in full_meta.items() if random.random() > 0.5}
     
-    try:
-        # Fetch a single record
-        print("\n1. Fetching single record...")
-        record = client.fetch_single_record()
-        print("Sample record:")
-        print(json.dumps(record, indent=2))
+    # If it's empty, we return None so the field doesn't even appear
+    return sparse_meta if sparse_meta else None
+
+def generate_record():
+    # Start with the mandatory Username (100% frequency)
+    record = {"username": random.choice(USER_POOL)}
+    
+    # 1. Flat fields: instead of fixed count, we use the pre-defined WEIGHTS
+    for key, weight in FIELD_WEIGHTS.items():
+        if random.random() < weight:
+            record[key] = FIELD_POOL[key]()
+
+    # 2. Nesting: Consistent structure name, but internal data is sparse
+    if random.random() > 0.4: # 60% chance to include the metadata block
+        meta_content = get_nested_metadata()
+        if meta_content:
+            record["metadata"] = meta_content
         
-        # Fetch a small batch
-        print("\n2. Fetching batch of 5 records...")
-        batch = client.fetch_batch(5)
-        print(f"Received {len(batch)} records")
-        print("First record keys:", list(batch[0].keys()))
-        
-        # Save a larger dataset
-        print("\n3. Saving 100 records to file...")
-        output_file = "/home/claude/adaptive_ingestion/data/api_stream.json"
-        client.save_to_file(100, output_file, batch_size=50)
-        
-        print("\n" + "=" * 80)
-        print("✓ All tests passed!")
-        print("=" * 80)
-        
-    except Exception as e:
-        print("\n" + "=" * 80)
-        print(f"✗ Error: {e}")
-        print("\nMake sure the FastAPI server is running:")
-        print("  cd Course_Resources/CS432_Databases/Assignments/T2")
-        print("  uvicorn app:app --reload --port 8000")
-        print("=" * 80)
+    return record
+
+@app.get("/")
+async def single_record():
+    return generate_record()
+
+@app.get("/record/{count}")
+async def stream_records(count: int):
+    async def event_generator():
+        for _ in range(count):
+            await asyncio.sleep(0.01) # Reduced sleep for high-volume 100k tests
+            yield {"event": "record", "data": json.dumps(generate_record())}
+    return EventSourceResponse(event_generator())
